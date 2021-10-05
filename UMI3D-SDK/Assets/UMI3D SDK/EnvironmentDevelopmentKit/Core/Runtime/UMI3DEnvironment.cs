@@ -137,6 +137,17 @@ namespace umi3d.edk
         {
             return Exists ? Instance.globalLibraries.Any() || Instance.scenes.Any(s => s.libraries.Any()) : false;
         }
+
+        /// <summary>
+        /// Create a JSon mediaDto file and save it at [path]
+        /// </summary>
+        /// <param name="path">The path to save the new file</param>
+        public void SaveMediaDtoToJSon(string path)
+        {
+            string dto_string = ToDto().ToJson();
+
+            System.IO.File.WriteAllText(path, dto_string);
+        }
         #endregion
 
         #region AsyncProperties
