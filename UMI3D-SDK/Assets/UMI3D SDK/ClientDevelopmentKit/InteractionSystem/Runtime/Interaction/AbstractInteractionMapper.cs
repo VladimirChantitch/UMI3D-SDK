@@ -15,6 +15,7 @@ limitations under the License.
 */
 using System;
 using System.Collections.Generic;
+using umi3d.common;
 using umi3d.common.interaction;
 using UnityEngine;
 
@@ -23,12 +24,8 @@ namespace umi3d.cdk.interaction
     /// <summary>
     /// Abstract class for UMI3D Player.
     /// </summary>
-    public abstract class AbstractInteractionMapper : MonoBehaviour
+    public abstract class AbstractInteractionMapper : Singleton<AbstractInteractionMapper>
     {
-        /// <summary>
-        /// Singleton instance.
-        /// </summary>
-        public static AbstractInteractionMapper Instance;
 
         /// <summary>
         /// The Interaction Controllers.
@@ -43,19 +40,6 @@ namespace umi3d.cdk.interaction
         /// it can.
         /// </summary>
         public bool shouldProjectHoldableEventOnSpecificInput = false;
-
-
-        protected virtual void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(this);
-            }
-        }
 
 
         /// <summary>

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+using System.Collections.Generic;
 using umi3d.cdk.menu;
 using umi3d.cdk.menu.interaction;
 using umi3d.common.interaction;
@@ -22,22 +23,20 @@ using UnityEngine.Events;
 
 namespace umi3d.cdk.interaction
 {
+    //TODO_TBX CHECK HERE !!!
     /// <summary>
     /// Client's side interactable object.
     /// </summary>
     /// <see cref="InteractableDto"/>
     public class Tool : AbstractTool
     {
-
+        public static Dictionary<ulong, Tool> instances = new Dictionary<ulong, Tool>();
         public class Event : UnityEvent<Tool> { }
 
-        public static ToolMenuItem IdToMenu(ulong id) { return (UMI3DEnvironmentLoader.GetEntity(id)?.Object as Tool)?.Menu; }
-
-        public ToolMenuItem Menu;
 
         public Toolbox toolbox;
         /// <summary>
-        /// ToolFix t dto describing this object.
+        /// Tool dto describing this object.
         /// </summary>
         public ToolDto dto;
 
@@ -46,24 +45,13 @@ namespace umi3d.cdk.interaction
 
         public Tool(ToolDto dto, Toolbox toolbox) : base(dto)
         {
-            this.toolbox = toolbox;
-            Menu = new ToolMenuItem()
-            {
-                tool = this,
-                Name = name,
-            };
-            foreach (var interaction in dto.interactions)
-            {
-                var item = getInteractionItem(interaction);
-                Menu.Add(item);
-            }
-
+            instances.Add(dto.id, this);
+            this.dto = dto;
+            this.toolbox = toolbox;    
             toolbox?.tools.Add(this);
-            toolbox?.sub.Add(Menu);
         }
 
-
-        MenuItem getInteractionItem(AbstractInteractionDto dto)
+        public MenuItem GetInteractionItem(AbstractInteractionDto dto)
         {
             MenuItem result = null;
             switch (dto)
@@ -227,6 +215,11 @@ namespace umi3d.cdk.interaction
             return result;
         }
 
+        public override void Destroy()
+        {
+            instances.Remove(dto.id);
+            base.Destroy();
+        }
 
     }
 }

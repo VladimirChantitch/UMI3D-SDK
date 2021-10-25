@@ -21,14 +21,10 @@ using umi3d.common.interaction;
 
 namespace umi3d.cdk.interaction
 {
+    //TODO_TBX CHECK HERE !!!
     public class InteractionMapper : AbstractInteractionMapper
     {
         public new static InteractionMapper Instance { get { return AbstractInteractionMapper.Instance as InteractionMapper; } }
-
-        /// <summary>
-        /// Menu to store toolboxes into.
-        /// </summary>
-        public Menu toolboxMenu;
 
         #region Data
 
@@ -55,12 +51,6 @@ namespace umi3d.cdk.interaction
         {
             foreach (AbstractController c in Controllers)
                 c.Clear();
-
-            if (toolboxMenu != null)
-            {
-                toolboxMenu.RemoveAllSubMenu();
-                toolboxMenu.RemoveAllMenuItem();
-            }
 
             toolIdToController = new Dictionary<ulong, AbstractController>();
         }
@@ -244,10 +234,7 @@ namespace umi3d.cdk.interaction
         #region CRUD
 
         /// <inheritdoc/>
-        public override void CreateToolbox(Toolbox toolbox)
-        {
-            toolboxMenu.Add(toolbox.sub);
-        }
+        public override void CreateToolbox(Toolbox toolbox) { } 
 
         /// <inheritdoc/>
         public override void CreateTool(Tool tool)
@@ -255,47 +242,20 @@ namespace umi3d.cdk.interaction
             foreach (var interaction in tool.dto.interactions)
             {
                 interactionsIdToDto[interaction.id] = interaction;
-            }
-            tool.Menu.Subscribe(() =>
-            {
-                if (tool.Menu.toolSelected)
-                {
-                    ReleaseTool(tool.id, new RequestedFromMenu());
-                }
-                else
-                {
-                    SelectTool(tool.id, true, 0, new RequestedFromMenu());
-                }
-            });
+            }            
         }
 
         /// <inheritdoc/>
-        public override Toolbox GetToolbox(ulong id)
-        {
-            if (!ToolboxExists(id))
-                throw new KeyNotFoundException();
-            return UMI3DEnvironmentLoader.GetEntity(id)?.Object as Toolbox;
-        }
+        public override Toolbox GetToolbox(ulong id) => Toolbox.instances[id];
 
         /// <inheritdoc/>
-        public override IEnumerable<Toolbox> GetToolboxes(Predicate<Toolbox> condition)
-        {
-            return Toolbox.Toolboxes().FindAll(condition);
-        }
+        public override IEnumerable<Toolbox> GetToolboxes(Predicate<Toolbox> condition) => Toolbox.instances.Values.ToList().FindAll(condition);
 
         /// <inheritdoc/>
-        public override AbstractTool GetTool(ulong id)
-        {
-            if (!ToolExists(id))
-                throw new KeyNotFoundException();
-            return UMI3DEnvironmentLoader.GetEntity(id)?.Object as AbstractTool;
-        }
+        public override AbstractTool GetTool(ulong id) => Tool.instances[id];
 
         /// <inheritdoc/>
-        public override IEnumerable<AbstractTool> GetTools(Predicate<AbstractTool> condition)
-        {
-            return UMI3DEnvironmentLoader.Entities().Where(e => e?.Object is AbstractTool).Select(e => e?.Object as AbstractTool).ToList().FindAll(condition);
-        }
+        public override IEnumerable<AbstractTool> GetTools(Predicate<AbstractTool> condition) => Tool.instances.Values.ToList().FindAll(condition);
 
         /// <inheritdoc/>
         public override AbstractInteractionDto GetInteraction(ulong id)

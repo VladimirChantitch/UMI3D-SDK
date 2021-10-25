@@ -82,6 +82,7 @@ namespace umi3d.common
         public const uint ToolboxIcon3D = 5004;
         public const uint ToolboxTools = 5005;
         public const uint ToolboxSceneId = 5006;
+        public const uint ToolboxSubToolboxes = 5007;
 
         public const uint ToolboxActive = 5010;
         public const uint ToolActive = 5011;

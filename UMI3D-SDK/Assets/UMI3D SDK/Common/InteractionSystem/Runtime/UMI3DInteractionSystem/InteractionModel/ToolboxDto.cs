@@ -24,6 +24,8 @@ namespace umi3d.common.interaction
     [System.Serializable]
     public class ToolboxDto : AbstractEntityDto, IEntity
     {
+        public bool Active;
+
         /// <summary>
         /// Name of the interaction.
         /// </summary>
@@ -39,14 +41,13 @@ namespace umi3d.common.interaction
         /// </summary>
         public ResourceDto icon2D = null;
 
-        public bool Active;
-
         /// <summary>
         /// 3D icon.
         /// </summary>
         public ResourceDto icon3D = null;
 
         public List<ToolDto> tools = new List<ToolDto>();
+        public List<ToolboxDto> subToolboxes = new List<ToolboxDto>();
 
         public ToolboxDto() : base() { }
 

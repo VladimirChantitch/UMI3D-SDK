@@ -26,7 +26,7 @@ namespace umi3d.edk.interaction
     /// <summary>
     /// Abstract UMI3D interaction collection.
     /// </summary>
-    public class UMI3DToolbox : MonoBehaviour, UMI3DLoadableEntity
+    public class UMI3DToolbox : MonoBehaviour, UMI3DLoadableEntity, IBytable
     {
         public InteractionDisplay display = new InteractionDisplay()
         {
@@ -40,6 +40,10 @@ namespace umi3d.edk.interaction
         [SerializeField, EditorReadOnly]
         protected List<UMI3DTool> tools = new List<UMI3DTool>();
         public UMI3DAsyncListProperty<UMI3DTool> objectTools { get { Register(); return _objectTools; } protected set => _objectTools = value; }
+
+        [SerializeField, EditorReadOnly]
+        protected List<UMI3DToolbox> subToolboxes = new List<UMI3DToolbox>();
+        public UMI3DAsyncListProperty<UMI3DToolbox> objectSubToolboxes { get { Register(); return _objectSubToolboxes; } protected set => _objectSubToolboxes = value; }
 
         [SerializeField, EditorReadOnly]
         protected bool Active;
@@ -115,6 +119,7 @@ namespace umi3d.edk.interaction
         protected Dictionary<UMI3DUser, bool> availableLastFrame = new Dictionary<UMI3DUser, bool>();
         private UMI3DAsyncProperty<UMI3DScene> _objectScene;
         private UMI3DAsyncListProperty<UMI3DTool> _objectTools;
+        private UMI3DAsyncListProperty<UMI3DToolbox> _objectSubToolboxes;
         private UMI3DAsyncProperty<bool> _objectActive;
         #endregion
 
@@ -136,6 +141,7 @@ namespace umi3d.edk.interaction
             toolboxId = id;
             if (Scene == null) Scene = GetComponent<UMI3DScene>();
             objectTools = new UMI3DAsyncListProperty<UMI3DTool>(toolboxId, UMI3DPropertyKeys.ToolboxTools, tools);
+            objectSubToolboxes = new UMI3DAsyncListProperty<UMI3DToolbox>(toolboxId, UMI3DPropertyKeys.ToolboxSubToolboxes, subToolboxes);
             objectScene = new UMI3DAsyncProperty<UMI3DScene>(toolboxId, UMI3DPropertyKeys.ToolboxSceneId, Scene, (s, u) => s.Id());
             objectActive = new UMI3DAsyncProperty<bool>(toolboxId, UMI3DPropertyKeys.ToolboxActive, Active);
             inited = true;
@@ -166,6 +172,7 @@ namespace umi3d.edk.interaction
             dto.icon2D = display.icon2D.ToDto();
             dto.icon3D = display.icon3D.ToDto();
             dto.tools = objectTools?.GetValue(user).Where(t => t != null).Select(t => t.ToDto(user) as ToolDto).ToList();
+            dto.subToolboxes = objectSubToolboxes?.GetValue(user).Where(t => t != null).Select(t => t.ToDto(user)).ToList();
             dto.Active = objectActive.GetValue(user);
             return dto;
         }
@@ -178,7 +185,8 @@ namespace umi3d.edk.interaction
                 + UMI3DNetworkingHelper.Write(objectActive.GetValue(user))
                 + display.icon2D.ToByte()
                 + display.icon3D.ToByte()
-                + UMI3DNetworkingHelper.WriteIBytableCollection((objectTools?.GetValue(user).Where(t => t != null)));
+                + UMI3DNetworkingHelper.WriteIBytableCollection(objectTools?.GetValue(user).Where(t => t != null))
+                + UMI3DNetworkingHelper.WriteIBytableCollection(objectSubToolboxes?.GetValue(user).Where(t => t != null));
         }
 
         public IEntity ToEntityDto(UMI3DUser user)
@@ -202,6 +210,15 @@ namespace umi3d.edk.interaction
         public bool RemoveConnectionFilter(UMI3DUserFilter filter)
         {
             return ConnectionFilters.Remove(filter);
+        }
+
+        public bool IsCountable() => true;
+
+        Bytable IBytable.ToBytableArray(params object[] parameters)
+        {
+            if (parameters.Length < 1)
+                ToBytes(null);
+            return ToBytes(parameters[0] as UMI3DUser);
         }
         #endregion
     }

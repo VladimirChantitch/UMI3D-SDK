@@ -26,37 +26,27 @@ namespace umi3d.cdk.interaction
     /// <see cref="InteractableDto"/>
     public class Toolbox
     {
-        public static List<Toolbox> Toolboxes() { return UMI3DEnvironmentLoader.Entities().Where(e => e?.Object is Toolbox).Select(e => e?.Object as Toolbox).ToList(); }
-        public static ToolboxSubMenu IdToMenu(ulong id) { return (UMI3DEnvironmentLoader.GetEntity(id)?.Object as Toolbox).sub; }
+        public static Dictionary<ulong, Toolbox> instances = new Dictionary<ulong, Toolbox>();
 
         /// <summary>
         /// Interactable dto describing this object.
         /// </summary>
         public ToolboxDto dto;
-        public ToolboxSubMenu sub;
-        public List<Tool> tools;
+        public List<Tool> tools = new List<Tool>();
 
         public bool Active { get => dto?.Active ?? false; }
 
         public Toolbox(ToolboxDto dto)
         {
-            tools = new List<Tool>();
-
+            instances.Add(dto.id, this);
             this.dto = dto;
             UMI3DEnvironmentLoader.RegisterEntityInstance(dto.id, dto, this, Destroy);
-            sub = new ToolboxSubMenu()
-            {
-                Name = dto.name,
-                toolbox = this
-            };
         }
 
         public void Destroy()
         {
-            foreach (Tool t in tools)
-            {
-                UMI3DEnvironmentLoader.DeleteEntity(t.dto.id, null);
-            }
+            instances.Remove(dto.id);
+            tools.ForEach(t => UMI3DEnvironmentLoader.DeleteEntity(t.dto.id, null));
         }
 
     }
