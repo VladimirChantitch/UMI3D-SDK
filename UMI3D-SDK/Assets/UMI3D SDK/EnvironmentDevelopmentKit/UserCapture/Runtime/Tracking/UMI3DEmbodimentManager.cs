@@ -29,6 +29,8 @@ namespace umi3d.edk.userCapture
     {
         const DebugScope scope = DebugScope.EDK | DebugScope.UserCapture | DebugScope.User;
 
+        public bool ActivateTracking = true;
+
         public UMI3DScene EmbodimentsScene;
         public GameObject SkeletonPrefab;
 
@@ -58,9 +60,12 @@ namespace umi3d.edk.userCapture
         ///<inheritdoc/>
         protected virtual void Start()
         {
-            UMI3DServer.Instance.OnUserJoin.AddListener(CreateEmbodiment);
-            UMI3DServer.Instance.OnUserLeave.AddListener(DeleteEmbodiment);
-            WriteCollections();
+            if (ActivateTracking)
+            {
+                UMI3DServer.Instance.OnUserJoin.AddListener(CreateEmbodiment);
+                UMI3DServer.Instance.OnUserLeave.AddListener(DeleteEmbodiment);
+                WriteCollections();
+            }
         }
 
         #region Tracking Data
@@ -130,22 +135,25 @@ namespace umi3d.edk.userCapture
         /// <param name="dto">a dto containing the tracking data</param>
         public void UserTrackingReception(UserTrackingFrameDto dto, ulong userId)
         {
-            if (!embodimentInstances.ContainsKey(userId))
+            if (ActivateTracking)
             {
-                UMI3DLogger.LogWarning($"Internal error : the user [{userId}] is not registered",scope);
-                return;
+                if (!embodimentInstances.ContainsKey(userId))
+                {
+                    UMI3DLogger.LogWarning($"Internal error : the user [{userId}] is not registered", scope);
+                    return;
+                }
+
+                UMI3DAvatarNode userEmbd = embodimentInstances[userId];
+                userEmbd.transform.localPosition = dto.position;
+                userEmbd.transform.localRotation = dto.rotation;
+                // userEmbd.transform.localScale = Vector3.one;
+
+                userEmbd.skeletonAnimator.transform.parent.position = userEmbd.transform.position + new Vector3(0, dto.skeletonHighOffset, 0);
+
+                UpdateNodeTransform(userEmbd);
+
+                userEmbd.UpdateEmbodiment(dto);
             }
-
-            UMI3DAvatarNode userEmbd = embodimentInstances[userId];
-            userEmbd.transform.localPosition = dto.position;
-            userEmbd.transform.localRotation = dto.rotation;
-            // userEmbd.transform.localScale = Vector3.one;
-
-            userEmbd.skeletonAnimator.transform.parent.position = userEmbd.transform.position + new Vector3(0, dto.skeletonHighOffset, 0);
-
-            UpdateNodeTransform(userEmbd);
-
-            userEmbd.UpdateEmbodiment(dto);
         }
 
         /// <summary>
