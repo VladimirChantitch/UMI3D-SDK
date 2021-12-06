@@ -29,6 +29,7 @@ namespace umi3d.edk.userCapture
     {
         const DebugScope scope = DebugScope.EDK | DebugScope.UserCapture | DebugScope.User;
 
+        [Tooltip("Should not be changed when Play Mode is running.")]
         public bool ActivateTracking = true;
 
         public UMI3DScene EmbodimentsScene;
