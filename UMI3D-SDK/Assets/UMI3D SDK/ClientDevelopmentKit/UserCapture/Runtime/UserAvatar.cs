@@ -30,7 +30,6 @@ namespace umi3d.cdk.userCapture
     {
         private const DebugScope scope = DebugScope.CDK | DebugScope.UserCapture;
 
-
         protected struct SavedTransform
         {
             public Transform obj;

@@ -139,13 +139,46 @@ namespace umi3d.edk.userCapture
             UMI3DAvatarNode userEmbd = embodimentInstances[userId];
             userEmbd.transform.localPosition = dto.position;
             userEmbd.transform.localRotation = dto.rotation;
-            // userEmbd.transform.localScale = Vector3.one;
 
             userEmbd.skeletonAnimator.transform.parent.position = userEmbd.transform.position + new Vector3(0, dto.skeletonHighOffset, 0);
 
             UpdateNodeTransform(userEmbd);
 
             userEmbd.UpdateEmbodiment(dto);
+        }
+
+        public void UserBindingsSyncRequest(UserBindingsSyncRequestDto dto, UMI3DUser user)
+        {
+            UMI3DAvatarNode userEmbd = embodimentInstances[dto.userAvatarId];
+
+            UserBindingsSyncRequest_(userEmbd, user);
+        }
+
+        public void UserBindingsSyncRequest(uint operationKey, ByteContainer container, UMI3DUser user)
+        {
+            UserBindingsSyncRequestDto dto = UMI3DNetworkingHelper.Read<UserBindingsSyncRequestDto>(container);
+
+            UMI3DAvatarNode userEmbd = embodimentInstances[dto.userAvatarId];
+
+            UserBindingsSyncRequest_(userEmbd, user);
+        }
+
+        private void UserBindingsSyncRequest_(UMI3DAvatarNode userEmbd, UMI3DUser user)
+        {
+            SetEntityProperty op;
+
+            if (userEmbd.bindings.DesynchronousUser.Contains(user))
+                op = userEmbd.bindings.SetValue(user, userEmbd.bindings.GetValue(user), true);
+
+            else
+            {
+                op = userEmbd.bindings.SetValue(userEmbd.bindings.GetValue(), true);
+                op.users = new HashSet<UMI3DUser>() { user };
+            }
+
+            var tr = new Transaction() { reliable = true };
+            tr.AddIfNotNull(op);
+            UMI3DServer.Dispatch(tr);
         }
 
         /// <summary>

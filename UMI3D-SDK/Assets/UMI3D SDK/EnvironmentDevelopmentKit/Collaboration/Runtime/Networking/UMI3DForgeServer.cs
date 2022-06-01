@@ -278,6 +278,14 @@ namespace umi3d.edk.collaboration
             {
                 var dto = UMI3DDto.FromBson(frame.StreamData.byteArr);
 
+                if (dto is common.userCapture.UserBindingsSyncRequestDto ubsrdto)
+                {
+                    MainThreadManager.Run(() =>
+                    {
+                        UMI3DEmbodimentManager.Instance.UserBindingsSyncRequest(ubsrdto, user);
+                    });
+                }
+
                 if (dto is common.userCapture.UserCameraPropertiesDto cam)
                 {
                     MainThreadManager.Run(() =>
@@ -306,6 +314,13 @@ namespace umi3d.edk.collaboration
                 uint id = UMI3DNetworkingHelper.Read<uint>(container);
                 switch (id)
                 {
+                    case UMI3DOperationKeys.UserBindingsSyncRequest:
+                        MainThreadManager.Run(() =>
+                        {
+                            UMI3DEmbodimentManager.Instance.UserBindingsSyncRequest(id, container, user);
+                        });
+                        break;
+
                     case UMI3DOperationKeys.UserCameraProperties:
                         MainThreadManager.Run(() =>
                         {
