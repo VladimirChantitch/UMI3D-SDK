@@ -68,7 +68,7 @@ namespace umi3d.worldController
                 Error(e.Response, "Can not read string from byte");
                 return;
             }
-            ConnectionDto dto = UMI3DDto.FromJson<FormConnectionAnswerDto>(text, Newtonsoft.Json.TypeNameHandling.None);
+            ConnectionDto dto = UMI3DDto.FromJson<FormConnectionAnswerDto>(text, Newtonsoft.Json.TypeNameHandling.None, null, false);
 
             if (dto == null)
             {
@@ -97,7 +97,7 @@ namespace umi3d.worldController
             if (result != null)
             {
                 HttpListenerResponse res = e.Response;
-                res.WriteContent(System.Text.Encoding.UTF8.GetBytes(result.ToJson(Newtonsoft.Json.TypeNameHandling.None)));
+                res.WriteContent(System.Text.Encoding.UTF8.GetBytes(result.ToJson(Newtonsoft.Json.TypeNameHandling.None, null, false)));
             }
         }
 
@@ -177,7 +177,7 @@ namespace umi3d.worldController
         {
             UMI3DLogger.Log($"Get Media", scope);
             HttpListenerResponse res = e.Response;
-            res.WriteContent(System.Text.Encoding.UTF8.GetBytes(api.ToDto().ToJson(Newtonsoft.Json.TypeNameHandling.None)));
+            res.WriteContent(System.Text.Encoding.UTF8.GetBytes(api.ToDto().ToJson(Newtonsoft.Json.TypeNameHandling.None, null, false)));
         }
         #endregion
 

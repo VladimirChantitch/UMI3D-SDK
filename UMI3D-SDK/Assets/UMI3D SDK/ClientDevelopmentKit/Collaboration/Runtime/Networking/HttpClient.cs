@@ -80,7 +80,7 @@ namespace umi3d.cdk.collaboration
         /// <param name="connectionDto"></param>
         public static async Task<UMI3DDto> Connect(ConnectionDto connectionDto, string MasterUrl, Func<RequestFailedArgument, bool> shouldTryAgain = null)
         {
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(connectionDto.ToJson(Newtonsoft.Json.TypeNameHandling.None));
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(connectionDto.ToJson(Newtonsoft.Json.TypeNameHandling.None, null, false));
 
             using (UnityWebRequest uwr = await _PostRequest(null, MasterUrl + UMI3DNetworkingKeys.connect, "application/json", bytes, (e) => shouldTryAgain?.Invoke(e) ?? DefaultShouldTryAgain(e), false))
             {
@@ -98,14 +98,14 @@ namespace umi3d.cdk.collaboration
 
             try
             {
-                dto1 = UMI3DDto.FromJson<PrivateIdentityDto>(text, Newtonsoft.Json.TypeNameHandling.None);
+                dto1 = UMI3DDto.FromJson<PrivateIdentityDto>(text, Newtonsoft.Json.TypeNameHandling.None, null, false);
             }
             catch (Exception)
             {
-                dto2 = UMI3DDto.FromJson<FakePrivateIdentityDto>(text, Newtonsoft.Json.TypeNameHandling.None);
+                dto2 = UMI3DDto.FromJson<FakePrivateIdentityDto>(text, Newtonsoft.Json.TypeNameHandling.None, null, false);
             }
 
-            ConnectionFormDto dto3 = UMI3DDto.FromJson<ConnectionFormDto>(text, Newtonsoft.Json.TypeNameHandling.None, new List<JsonConverter>() { new ParameterConverter() });
+            ConnectionFormDto dto3 = UMI3DDto.FromJson<ConnectionFormDto>(text, Newtonsoft.Json.TypeNameHandling.None, new List<JsonConverter>() { new ParameterConverter() },false);
 
             if (dto1 != null && dto1?.GlobalToken != null && dto1?.connectionDto != null)
                 return dto1;
@@ -221,7 +221,7 @@ namespace umi3d.cdk.collaboration
                 return new PrivateIdentityDto()
                 {
                     GlobalToken = GlobalToken,
-                    connectionDto = UMI3DDto.FromJson<ForgeConnectionDto>(connectionDto, Newtonsoft.Json.TypeNameHandling.None),
+                    connectionDto = UMI3DDto.FromJson<ForgeConnectionDto>(connectionDto, Newtonsoft.Json.TypeNameHandling.None, null, false),
                     libraries = libraries,
                     localToken = localToken,
                     headerToken = headerToken,
@@ -361,7 +361,7 @@ namespace umi3d.cdk.collaboration
                 UMI3DLogger.Log($"Received GetMedia", scope | DebugScope.Connection);
                 if (uwr?.downloadHandler.data == null) return null;
                 string json = System.Text.Encoding.UTF8.GetString(uwr.downloadHandler.data);
-                return UMI3DDto.FromJson<MediaDto>(json, Newtonsoft.Json.TypeNameHandling.None);
+                return UMI3DDto.FromJson<MediaDto>(json, Newtonsoft.Json.TypeNameHandling.None,null, false);
             }
         }
 

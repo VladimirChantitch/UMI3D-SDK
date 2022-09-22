@@ -78,7 +78,7 @@ namespace umi3d.worldController
 
         public virtual async Task<bool> isFormValid(User user, FormAnswerDto formAnswer)
         {
-            UnityEngine.Debug.Log(formAnswer.ToJson(Newtonsoft.Json.TypeNameHandling.None));
+            UnityEngine.Debug.Log(formAnswer.ToJson(Newtonsoft.Json.TypeNameHandling.None, null, false));
 
             SetToken(user);
             return await Task.FromResult(true);
