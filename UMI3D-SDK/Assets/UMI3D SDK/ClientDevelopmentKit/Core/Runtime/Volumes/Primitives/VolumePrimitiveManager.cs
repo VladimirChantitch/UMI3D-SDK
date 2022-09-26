@@ -99,6 +99,20 @@ namespace umi3d.cdk.volumes
                     onPrimitiveCreation.Invoke(c);
                     finished.Invoke(c);
                     break;
+                case SphereDto sphereDto:
+                    var s = new Sphere()
+                    {
+                        id = sphereDto.id,
+                    };
+                    s.SetRadius(sphereDto.radius);
+                    s.RootNodeId = dto.rootNodeId;
+                    s.SetLocalCenterOffset(sphereDto.localCenterOffset);
+
+                    primitives.Add(dto.id, s);
+                    s.isTraversable = dto.isTraversable;
+                    onPrimitiveCreation.Invoke(s);
+                    finished.Invoke(s);
+                    break;
                 default:
                     throw new System.Exception("Unknown primitive type !");
             }
@@ -133,14 +147,34 @@ namespace umi3d.cdk.volumes
             Gizmos.color = Color.red;
             foreach (Box box in GetPrimitives().Where(p => p is Box))
             {
-                Gizmos.matrix = box.rootNode?.localToWorldMatrix ?? Matrix4x4.identity;
-                Gizmos.DrawWireCube(box.bounds.center, box.bounds.size);
+
             }
 
             foreach (Cylinder cyl in GetPrimitives().Where(c => c is Cylinder))
             {
-                Gizmos.matrix = cyl.rootNode?.localToWorldMatrix ?? Matrix4x4.identity;
-                Gizmos.DrawWireMesh(GeometryTools.GetCylinder(Vector3.zero, Quaternion.identity, Vector3.one, cyl.radius, cyl.height));
+
+            }
+
+            foreach (var cell in GetPrimitives())
+            {
+                switch (cell)
+                {
+                    case Box box:
+                        Gizmos.matrix = box.rootNode?.localToWorldMatrix ?? Matrix4x4.identity;
+                        Gizmos.DrawWireCube(box.bounds.center, box.bounds.size);
+                        break;
+                    case Cylinder cylinder:
+                        Gizmos.matrix = cylinder.rootNode?.localToWorldMatrix ?? Matrix4x4.identity;
+                        Gizmos.DrawWireMesh(GeometryTools.GetCylinder(Vector3.zero, Quaternion.identity, Vector3.one, cylinder.radius, cylinder.height));
+                        break;
+                    case Sphere sphere:
+                        Gizmos.matrix = Matrix4x4.identity;
+                        Vector3 pos = sphere.rootNode?.transform.TransformPoint(sphere.localCenterOffset) ?? Vector3.zero;
+                        Gizmos.DrawSphere(sphere.rootNode?.transform.position ?? Vector3.zero, sphere.radius);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

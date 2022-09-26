@@ -79,6 +79,16 @@ namespace umi3d.cdk.volumes
                     cyl_2.SetRadius((float)property.value);
                     return true;
 
+                case UMI3DPropertyKeys.VolumePrimitive_Sphere_Radius:
+                    var sphere_1 = entity.Object as Sphere;
+                    sphere_1.SetRadius((float)property.value);
+                    return true;
+
+                case UMI3DPropertyKeys.VolumePrimitive_Sphere_Offset:
+                    var sphere_2 = entity.Object as Sphere;
+                    sphere_2.SetLocalCenterOffset((Vector3)property.value);
+                    return true;
+
                 default:
                     return false;
             }
@@ -110,6 +120,15 @@ namespace umi3d.cdk.volumes
                 case UMI3DPropertyKeys.VolumePrimitive_Cylinder_Radius:
                     var cyl_2 = entity.Object as Cylinder;
                     cyl_2.SetRadius(UMI3DNetworkingHelper.Read<float>(container));
+                    return true;
+                case UMI3DPropertyKeys.VolumePrimitive_Sphere_Radius:
+                    var sphere_1 = entity.Object as Sphere;
+                    sphere_1.SetRadius(UMI3DNetworkingHelper.Read<float>(container));
+                    return true;
+
+                case UMI3DPropertyKeys.VolumePrimitive_Sphere_Offset:
+                    var sphere_2 = entity.Object as Sphere;
+                    sphere_2.SetLocalCenterOffset(UMI3DNetworkingHelper.Read<Vector3>(container));
                     return true;
 
                 default:

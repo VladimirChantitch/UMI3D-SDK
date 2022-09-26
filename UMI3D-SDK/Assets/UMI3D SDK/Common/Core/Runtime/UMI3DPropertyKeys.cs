@@ -259,6 +259,9 @@ namespace umi3d.common
         public const uint VolumePrimitive_Box_Size = 15008;
         public const uint VolumePrimitive_Cylinder_Height = 15009;
         public const uint VolumePrimitive_Cylinder_Radius = 15010;
+        public const uint VolumePrimitive_Sphere_Radius = 15011;
+        public const uint VolumePrimitive_Sphere_Offset = 15012;
+
         #endregion
     }
 }
