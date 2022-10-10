@@ -1,10 +1,10 @@
 {
-    "name": "glTFast.Runtime.Tests",
+    "name": "Tests",
     "references": [
-        "glTFast",
-        "glTFSampleModels",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "UMI3D.Common.Collaboration",
+        "UMI3D.Common.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
