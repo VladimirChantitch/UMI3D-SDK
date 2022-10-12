@@ -85,7 +85,7 @@ namespace umi3d.common
         /// <returns>state if the value is readable from this byte container</returns>
         public static bool TryRead<T>(ByteContainer container, out T result)
         {
-            if (container == null) { result = default(T); return false; }
+            //if (container == null) { result = default(T); return false; } //rajouté parce que ça ne passe pas 
             switch (true)
             {   
                 case true when typeof(T) == typeof(char):
