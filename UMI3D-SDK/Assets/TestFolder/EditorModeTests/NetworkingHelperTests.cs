@@ -116,6 +116,8 @@ namespace Tests
         }
         #endregion
 
+        // Test the Read Fonction
+
         #region TryRead TESTs 
         #region True
         [Test]
@@ -349,5 +351,19 @@ namespace Tests
         }
         #endregion
         #endregion
+
+        // Read List
+        // ReadDictionnary
+        // Read Array 
+        // Read byte array
+        // Read IndexList
+        // Write
+        // Write Collection
+        // Write Byte Collection
+        // Write IByteCollection
+        
     }
+    //Byte Container$
+    //Bytable$
+    //Umi3dNetworkingHelperModule$
 }
