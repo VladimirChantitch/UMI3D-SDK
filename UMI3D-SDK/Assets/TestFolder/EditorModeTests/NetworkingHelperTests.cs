@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using umi3d.common;
 using System.Linq;
 using System;
 using System.Security;
+using umi3d.common;
+using umi3d.cdk.interaction;
+using umi3d.common.collaboration;
+using umi3d.common.interaction;
+using umi3d.common.userCapture;
+using umi3d.edk.collaboration;
 
 namespace Tests
 {
@@ -24,6 +29,92 @@ namespace Tests
         {
             byteContainer = null;
         }
+
+        #region AddModule
+        [Test]
+        public void TryAddModule_environnementNet()
+        {
+            UMI3DEnvironmentNetworkingCollaborationModule module = new UMI3DEnvironmentNetworkingCollaborationModule();
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.AddModule(module));
+        }
+        [Test]
+        public void TryAddModule_collaborationNet()
+        {
+            UMI3DCollaborationNetworkingModule module = new UMI3DCollaborationNetworkingModule();
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.AddModule(module));
+        }
+
+        [Test]
+        public void TryAddModule_collaborationNet_list()
+        {
+            List<Umi3dNetworkingHelperModule> modules = new List<Umi3dNetworkingHelperModule>
+            {
+                new UMI3DCollaborationNetworkingModule(),
+                new UMI3DCollaborationNetworkingModule(),
+                new UMI3DCollaborationNetworkingModule()
+            };
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.AddModule(modules));
+        }
+
+        [Test]
+        public void TryAddModule_environnementNet_list()
+        {
+            List<Umi3dNetworkingHelperModule> modules = new List<Umi3dNetworkingHelperModule>
+            {
+                new UMI3DEnvironmentNetworkingCollaborationModule(),
+                new UMI3DEnvironmentNetworkingCollaborationModule(),
+                new UMI3DEnvironmentNetworkingCollaborationModule()
+            };
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.AddModule(modules));
+        }
+
+
+        #endregion
+        #region RemoveModule
+        [Test]
+        public void TryRemoveModule_envirronementNet()
+        {
+            UMI3DEnvironmentNetworkingCollaborationModule module = new UMI3DEnvironmentNetworkingCollaborationModule();
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.RemoveModule(module));
+        }
+        [Test]
+        public void TryRemoveModule_collaborationNet()
+        {
+            UMI3DCollaborationNetworkingModule module = new UMI3DCollaborationNetworkingModule();
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.RemoveModule(module));
+        }
+        [Test]
+        public void TryRemoveModule_collaborationNet_list()
+        {
+            List<Umi3dNetworkingHelperModule> modules = new List<Umi3dNetworkingHelperModule>
+            {
+                new UMI3DCollaborationNetworkingModule(),
+                new UMI3DCollaborationNetworkingModule(),
+                new UMI3DCollaborationNetworkingModule()
+            };
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.RemoveModule(modules));
+        }
+
+        [Test]
+        public void TryRemoveModule_environnementNet_list()
+        {
+            List<Umi3dNetworkingHelperModule> modules = new List<Umi3dNetworkingHelperModule>
+            {
+                new UMI3DEnvironmentNetworkingCollaborationModule(),
+                new UMI3DEnvironmentNetworkingCollaborationModule(),
+                new UMI3DEnvironmentNetworkingCollaborationModule()
+            };
+
+            Assert.DoesNotThrow(() => UMI3DNetworkingHelper.RemoveModule(modules));
+        }
+        #endregion
 
         #region TryRead TESTs 
         #region True

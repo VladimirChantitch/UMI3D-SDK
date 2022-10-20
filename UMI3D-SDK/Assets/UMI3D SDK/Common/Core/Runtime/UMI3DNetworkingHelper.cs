@@ -32,7 +32,7 @@ namespace umi3d.common
         /// <param name="module"></param>
         public static void AddModule(Umi3dNetworkingHelperModule module)
         {
-            modules.Add(module);
+                modules.Add(module);
         }
 
         /// <summary>
