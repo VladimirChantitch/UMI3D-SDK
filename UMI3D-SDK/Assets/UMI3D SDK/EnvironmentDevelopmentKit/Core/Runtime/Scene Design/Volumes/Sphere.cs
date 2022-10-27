@@ -59,14 +59,15 @@ namespace umi3d.edk.volume
         /// <exception cref="System.NotImplementedException"></exception>
         public override IEntity ToEntityDto(UMI3DUser user)
         {
-            return new SphereDto()
+            var sphere =  new SphereDto()
             {
-                id = Id(),
                 radius = radius.GetValue(user),
                 localCenterOffset = localCenterOffset.GetValue(user),
-                rootNodeId = GetRootNode().Id(),
-                isTraversable = IsTraversable()
             };
+
+            WriteProperties(sphere, user);
+
+            return sphere;
         }
 
         public void OnDrawGizmos()

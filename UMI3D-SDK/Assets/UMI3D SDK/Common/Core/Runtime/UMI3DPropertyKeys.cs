@@ -262,6 +262,8 @@ namespace umi3d.common
         public const uint VolumePrimitive_Sphere_Radius = 15011;
         public const uint VolumePrimitive_Sphere_Offset = 15012;
 
+        public const uint VolumeEnterAnimation = 15050;
+        public const uint VolumeExitAnimation = 15051;
         #endregion
     }
 }

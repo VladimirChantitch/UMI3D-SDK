@@ -97,8 +97,7 @@ namespace umi3d.cdk.volumes
                     primitives.Add(dto.id, c);
                     c.isTraversable = dto.isTraversable;
                     onPrimitiveCreation.Invoke(c);
-                    finished.Invoke(c);
-                    break;
+                    return c;
                 case SphereDto sphereDto:
                     var s = new Sphere()
                     {
@@ -111,8 +110,7 @@ namespace umi3d.cdk.volumes
                     primitives.Add(dto.id, s);
                     s.isTraversable = dto.isTraversable;
                     onPrimitiveCreation.Invoke(s);
-                    finished.Invoke(s);
-                    break;
+                    return s;
                 default:
                     throw new System.Exception("Unknown primitive type !");
             }

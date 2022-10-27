@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+using inetum.unityUtils;
 using System.Collections.Generic;
 using System.Linq;
 using umi3d.common;
+using umi3d.common.volume;
 using UnityEngine;
 
 namespace umi3d.edk.volume
@@ -27,8 +29,33 @@ namespace umi3d.edk.volume
     [RequireComponent(typeof(UMI3DAbstractNode))]
     public abstract class AbstractPrimitive : MonoBehaviour, IVolume
     {
+        #region Fields
+
         public UMI3DUserEvent onUserEnter = new UMI3DUserEvent();
+
         public UMI3DUserEvent onUserExit = new UMI3DUserEvent();
+
+        // <summary>
+        /// Triggered when the object is hovered by a user.
+        /// </summary>
+        [SerializeField, EditorReadOnly, Tooltip("Triggered when a user enters the volume.")]
+        protected UMI3DAbstractAnimation VolumeEnterAnimation;
+        /// <summary>
+        /// Triggered when the object stops to be hovered by a user.
+        /// </summary>
+        [SerializeField, EditorReadOnly, Tooltip("Triggered when a user exits the volume.")]
+        protected UMI3DAbstractAnimation VolumeExitAnimation;
+
+        public UMI3DAsyncProperty<UMI3DAbstractAnimation> volumeEnterAnimation;
+        public UMI3DAsyncProperty<UMI3DAbstractAnimation> volumeExitAnimation;
+
+        #endregion
+
+        private void Start()
+        {
+            volumeEnterAnimation = new UMI3DAsyncProperty<UMI3DAbstractAnimation>(Id(), UMI3DPropertyKeys.VolumeEnterAnimation, VolumeEnterAnimation, (anim, user) => anim?.Id());
+            volumeExitAnimation = new UMI3DAsyncProperty<UMI3DAbstractAnimation>(Id(), UMI3DPropertyKeys.VolumeExitAnimation, VolumeEnterAnimation, (anim, user) => anim?.Id());
+        }
 
         ///<inheritdoc/>
         public UMI3DUserEvent GetUserEnter()
@@ -89,6 +116,15 @@ namespace umi3d.edk.volume
                 VolumeManager.volumes.Add(Id(), this);
             }
             return id.Value;
+        }
+
+        protected virtual void WriteProperties(AbstractPrimitiveDto dto, UMI3DUser user)
+        {
+            dto.id = Id();
+            dto.rootNodeId = GetRootNode().Id();
+            dto.isTraversable = IsTraversable();
+            dto.volumeEnterAnimation = volumeEnterAnimation.GetValue(user)?.Id() ?? 0;
+            dto.volumeExitAnimation = volumeExitAnimation.GetValue(user)?.Id() ?? 0;
         }
 
         #region filter

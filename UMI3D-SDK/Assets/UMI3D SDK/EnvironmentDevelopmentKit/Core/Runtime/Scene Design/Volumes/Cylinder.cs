@@ -37,14 +37,15 @@ namespace umi3d.edk.volume
 
         public override IEntity ToEntityDto(UMI3DUser user)
         {
-            return new CylinderDto()
+            var cylinder = new CylinderDto()
             {
-                id = Id(),
                 height = height.GetValue(),
                 radius = radius.GetValue(),
-                rootNodeId = GetRootNode().Id(),
-                isTraversable = IsTraversable()
             };
+
+            WriteProperties(cylinder, user);
+
+            return cylinder;
         }
 
         public void OnDrawGizmos()

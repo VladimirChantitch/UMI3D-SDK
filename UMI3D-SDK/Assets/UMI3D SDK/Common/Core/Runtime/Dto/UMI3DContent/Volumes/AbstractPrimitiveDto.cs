@@ -18,6 +18,7 @@ namespace umi3d.common.volume
 {
     public class AbstractPrimitiveDto : AbstractVolumeCellDto
     {
-
+        public ulong volumeEnterAnimation = 0;
+        public ulong volumeExitAnimation = 0;
     }
 }

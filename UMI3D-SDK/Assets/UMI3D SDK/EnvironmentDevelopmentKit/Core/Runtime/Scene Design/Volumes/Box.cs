@@ -48,14 +48,14 @@ namespace umi3d.edk.volume
 
         public override IEntity ToEntityDto(UMI3DUser user)
         {
-            return new BoxDto()
+            var box = new BoxDto()
             {
-                id = Id(),
                 center = center.GetValue() + (extendFromBottom ? bounds.extents.y * Vector3.up : Vector3.zero),
                 size = size.GetValue(),
-                rootNodeId = GetRootNode().Id(),
-                isTraversable = IsTraversable()
             };
+            WriteProperties(box, user);
+
+            return box;
         }
 
         public void OnDrawGizmos()
