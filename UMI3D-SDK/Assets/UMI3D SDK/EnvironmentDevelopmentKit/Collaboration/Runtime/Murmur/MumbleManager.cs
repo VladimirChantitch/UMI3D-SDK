@@ -29,6 +29,7 @@ namespace umi3d.edk.collaboration.murmur
         private const DebugScope scope = DebugScope.EDK | DebugScope.Collaboration | DebugScope.Mumble;
 
         public readonly string ip;
+        public readonly string httpIp;
         private MurmurAPI m;
         private MurmurAPI.Server serv;
         private readonly string guid;
@@ -88,14 +89,14 @@ namespace umi3d.edk.collaboration.murmur
         float RefreshTime = 0;
         const float MaxRefreshTimeSecond = 30f;
 
-        public static MumbleManager Create(string ip, string guid = null)
+        public static MumbleManager Create(string ip,string http = null, string guid = null)
         {
             if (string.IsNullOrEmpty(ip))
                 return null;
             if (string.IsNullOrEmpty(guid))
                 guid = System.Guid.NewGuid().ToString();
 
-            var mm = new MumbleManager(ip, guid);
+            var mm = new MumbleManager(ip, http, guid);
             mm._Create();
             mm.HeartBeat();
             QuittingManager.OnApplicationIsQuitting.AddListener(mm.Delete);
@@ -108,7 +109,7 @@ namespace umi3d.edk.collaboration.murmur
             while (running)
             {
                 await UMI3DAsyncManager.Yield();
-                if (RefreshTime - UnityEngine.Time.time < 0)
+                if (RefreshTime - UnityEngine.Time.time > 0)
                     continue;
                 await Refresh();
             }
@@ -133,21 +134,21 @@ namespace umi3d.edk.collaboration.murmur
                 await Refresh();
         }
 
-        private MumbleManager(string ip, string guid = null)
+        private MumbleManager(string ip,string http, string guid = null)
         {
             this.guid = guid;
             this.ip = ip;
-            string[] s = ip.Split(':');
-            m = new MurmurAPI(s[0]);
+            this.httpIp = (string.IsNullOrEmpty(http)) ? ip.Split(':')[0] : http;
+            m = new MurmurAPI(httpIp);
             roomList = new List<Room>();
             userList = new List<User>();
-            roomRegex = new Regex(@"Room([0 - 9] *)_\[" + guid + @"\]");
+            roomRegex = new Regex(@"Room([0-9]*)_\[" + guid + @"\]");
             userRegex = new Regex(@"User((.*))_\[" + guid + @"\]");
         }
 
-        private string GenerateUserName(string userID)
+        private string GenerateUserName(UMI3DCollaborationUser user, string userID)
         {
-            return @"User" + userID + @"_[" + guid + @"]";
+            return @"User_"+user.displayName+"_"+ userID + @"_[" + guid + @"]";
         }
         private string GenerateRoomName(int i)
         {
@@ -164,6 +165,7 @@ namespace umi3d.edk.collaboration.murmur
             }
 
             refreshing = true;
+            RefreshTime = UnityEngine.Time.time + MaxRefreshTimeSecond;
             await ForceRefresh();
             RefreshTime = UnityEngine.Time.time + MaxRefreshTimeSecond;
             refreshing = false;
@@ -183,7 +185,7 @@ namespace umi3d.edk.collaboration.murmur
             catch (Exception e)
             {
                 UMI3DLogger.LogError($"Error in mumble server refreshing [will try again in 1min] {e.Message} \n {e.StackTrace}", scope);
-                UMI3DLogger.LogExcetion(e, scope);
+                UMI3DLogger.LogException(e, scope);
                 await UMI3DAsyncManager.Delay(60000);
                 await ForceRefresh();
             }
@@ -259,8 +261,8 @@ namespace umi3d.edk.collaboration.murmur
             }
             catch (Exception e)
             {
-                UMI3DLogger.LogError($"Error in mumble create room {e.Message} \n {e.StackTrace}", scope);
-                UMI3DLogger.LogExcetion(e, scope);
+                UMI3DLogger.LogError($"Error in mumble create room", scope);
+                UMI3DLogger.LogException(e, scope);
                 await UMI3DAsyncManager.Delay(500);
                 RefreshAsync();
             }
@@ -276,8 +278,8 @@ namespace umi3d.edk.collaboration.murmur
 
             catch (Exception e)
             {
-                UMI3DLogger.LogError($"Error in mumble delete room {e.Message} \n {e.StackTrace}", scope);
-                UMI3DLogger.LogExcetion(e, scope);
+                UMI3DLogger.LogError($"Error in mumble delete room", scope);
+                UMI3DLogger.LogException(e, scope);
                 await UMI3DAsyncManager.Delay(500);
                 RefreshAsync();
             }
@@ -293,8 +295,8 @@ namespace umi3d.edk.collaboration.murmur
             }
             catch (Exception e)
             {
-                UMI3DLogger.LogError($"Error in mumble create user {e.Message} \n {e.StackTrace}", scope);
-                UMI3DLogger.LogExcetion(e, scope);
+                UMI3DLogger.LogError($"Error in mumble create user", scope);
+                UMI3DLogger.LogException(e, scope);
                 await UMI3DAsyncManager.Delay(500);
                 RefreshAsync();
             }
@@ -309,8 +311,8 @@ namespace umi3d.edk.collaboration.murmur
             }
             catch (Exception e)
             {
-                UMI3DLogger.LogError($"Error in mumble delete user {e.Message} \n {e.StackTrace}", scope);
-                UMI3DLogger.LogExcetion(e, scope);
+                UMI3DLogger.LogError($"Error in mumble delete user", scope);
+                UMI3DLogger.LogException(e, scope);
                 await UMI3DAsyncManager.Delay(500);
                 RefreshAsync();
             }
@@ -367,7 +369,7 @@ namespace umi3d.edk.collaboration.murmur
         public List<Operation> AddUser(UMI3DCollaborationUser user, int room = -1)
         {
             var userId = System.Guid.NewGuid().ToString();
-            var _user = new User(userId, GenerateUserName(userId));
+            var _user = new User(userId, GenerateUserName(user,userId));
             _user.password = System.Guid.NewGuid().ToString();
             userList.Add(_user);
 

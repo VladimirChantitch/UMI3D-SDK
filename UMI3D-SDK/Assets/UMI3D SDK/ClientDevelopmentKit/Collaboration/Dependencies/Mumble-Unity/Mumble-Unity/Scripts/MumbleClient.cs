@@ -78,6 +78,8 @@ namespace Mumble
         /// </summary>
         public delegate void OnDisconnectedMethod();
 
+        public delegate void OnPingReceivedMethod();
+
         // Actions for non-main threaded events
         public Action<uint> OnNewDecodeBufferThreaded;
         public Action<uint> OnRemovedDecodeBufferThreaded;
@@ -92,6 +94,7 @@ namespace Mumble
 
         public OnChannelChangedMethod OnChannelChanged;
         public OnDisconnectedMethod OnDisconnected;
+        public OnPingReceivedMethod OnPingReceived;
         private MumbleTcpConnection _tcpConnection;
         private MumbleUdpConnection _udpConnection;
         private DecodingBufferPool _decodingBufferPool;
@@ -753,14 +756,14 @@ namespace Mumble
 
             if (_pendingMute.HasValue)
             {
-                Debug.Log("Pending mute: " + _pendingMute.HasValue);
+                //Debug.Log("Pending mute: " + _pendingMute.HasValue);
                 return _pendingMute.Value;
             }
 
             if (!OurUserState.ShouldSerializeSelfMute())
                 return false;
 
-            Debug.Log("Our Self Mute is " + OurUserState.SelfMute);
+            //Debug.Log("Our Self Mute is " + OurUserState.SelfMute);
             return OurUserState.SelfMute;
         }
         public bool SetOurComment(string newComment)
@@ -877,6 +880,14 @@ namespace Mumble
             if (_udpConnection != null)
                 return _udpConnection.GetLatestClientNonce();
             return null;
+        }
+        internal void OnNotifyPingReceived()
+        {
+            EventProcessor.Instance.QueueEvent(() =>
+            {
+                if (OnPingReceived != null)
+                    OnPingReceived();
+            });
         }
         internal void OnConnectionDisconnect()
         {

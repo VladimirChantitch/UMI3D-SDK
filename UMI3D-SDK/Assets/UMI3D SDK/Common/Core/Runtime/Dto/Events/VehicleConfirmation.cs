@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2019 - 2021 Inetum
+Copyright 2019 - 2022 Inetum
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,22 +16,24 @@ limitations under the License.
 
 namespace umi3d.common
 {
-    public class DofType : GenericEnumString
+    public class VehicleConfirmation : AbstractBrowserRequestDto
     {
-        public DofType(string value) : base(value)
+        /// <summary>
+        /// User id of the user in the vehicle.
+        /// </summary>
+        public ulong embarkedUserId;
+
+        /// <inheritdoc/>
+        protected override uint GetOperationId()
         {
+            return UMI3DOperationKeys.VehicleConfirmation;
         }
 
-        public static DofType Translation => new DofType("Translation");
-        public static DofType Rotation => new DofType("Rotation");
-
-        public static implicit operator DofType(string str)
+        /// <inheritdoc/>
+        public override Bytable ToBytableArray(params object[] parameters)
         {
-            if (str == Translation)
-                return Translation;
-            if (str == Rotation)
-                return Rotation;
-            return Translation;
+            return base.ToBytableArray(parameters)
+                + UMI3DNetworkingHelper.Write(embarkedUserId);
         }
     }
-}
+};

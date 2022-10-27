@@ -16,6 +16,7 @@ limitations under the License.
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using umi3d.common;
 using UnityEngine;
 
@@ -66,7 +67,7 @@ namespace umi3d.cdk
         /// <param name="node">Gameobject on which to setup the object.</param>
         /// <param name="finished">Finished callback.</param>
         /// <param name="failed">Error callback.</param>
-        public abstract void ReadUMI3DExtension(UMI3DDto dto, GameObject node, Action finished, Action<Umi3dException> failed);
+        public abstract Task ReadUMI3DExtension(UMI3DDto dto, GameObject node);
 
         /// <summary>
         /// Update a property.
@@ -97,14 +98,14 @@ namespace umi3d.cdk
         /// </summary>
         /// <param name="operation">Operation to handle.</param>
         /// <param name="performed">Callback to call when the operation is performed (or won't be performed)</param>
-        public abstract void UnknownOperationHandler(AbstractOperationDto operation, Action performed);
+        public abstract Task UnknownOperationHandler(AbstractOperationDto operation);
 
         /// <summary>
         /// Handle Operation not handle by default.
         /// </summary>
         /// <param name="operation">Operation to handle.</param>
         /// <param name="performed">Callback to call when the operation is performed (or won't be performed)</param>
-        public abstract void UnknownOperationHandler(uint operationId, ByteContainer container, Action performed);
+        public abstract Task UnknownOperationHandler(uint operationId, ByteContainer container);
 
         /// <summary>
         /// Load a ResourceDto as a Skybox.

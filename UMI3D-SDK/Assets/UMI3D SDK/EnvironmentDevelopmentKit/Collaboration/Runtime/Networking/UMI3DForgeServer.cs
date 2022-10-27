@@ -304,6 +304,13 @@ namespace umi3d.edk.collaboration
                         });
                         break;
 
+                    case common.VehicleConfirmation vConfirmation:
+                        MainThreadManager.Run(() =>
+                        {
+                            UMI3DEmbodimentManager.Instance.ConfirmEmbarkment(vConfirmation, user);
+                        });
+                        break;
+
                     case common.volume.VolumeUserTransitDto vutdto:
                         MainThreadManager.Run(() =>
                         {
@@ -328,7 +335,7 @@ namespace umi3d.edk.collaboration
             }
             else
             {
-                var container = new ByteContainer(frame.StreamData.byteArr);
+                var container = new ByteContainer(frame);
                 uint id = UMI3DNetworkingHelper.Read<uint>(container);
                 switch (id)
                 {
@@ -336,6 +343,13 @@ namespace umi3d.edk.collaboration
                         MainThreadManager.Run(() =>
                         {
                             UMI3DEmbodimentManager.Instance.UserCameraReception(id, container, user);
+                        });
+                        break;
+
+                    case UMI3DOperationKeys.VehicleConfirmation:
+                        MainThreadManager.Run(() =>
+                        {
+                            UMI3DEmbodimentManager.Instance.ConfirmEmbarkment(id, container, user);
                         });
                         break;
 
@@ -413,11 +427,12 @@ namespace umi3d.edk.collaboration
             {
                 trackingFrame = new UserTrackingFrameDto();
 
-                var container = new ByteContainer(frame.StreamData.byteArr);
+                var container = new ByteContainer(frame);
                 uint id = UMI3DNetworkingHelper.Read<uint>(container);
                 if (id == UMI3DOperationKeys.UserTrackingFrame)
                 {
                     trackingFrame.userId = UMI3DNetworkingHelper.Read<ulong>(container);
+                    trackingFrame.parentId = UMI3DNetworkingHelper.Read<ulong>(container);
                     trackingFrame.skeletonHighOffset = UMI3DNetworkingHelper.Read<float>(container);
                     trackingFrame.position = UMI3DNetworkingHelper.Read<SerializableVector3>(container);
                     trackingFrame.rotation = UMI3DNetworkingHelper.Read<SerializableVector4>(container);

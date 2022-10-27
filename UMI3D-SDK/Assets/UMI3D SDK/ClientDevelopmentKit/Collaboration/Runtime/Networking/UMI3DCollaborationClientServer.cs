@@ -27,6 +27,8 @@ namespace umi3d.cdk.collaboration
 
     public class OnForceLogoutEvent : UnityEvent<string> { }
 
+    public class OnProgressEvent : UnityEvent<Progress> { }
+
     /// <summary>
     /// Collaboration Extension of the UMI3DClientServer
     /// </summary>
@@ -37,12 +39,16 @@ namespace umi3d.cdk.collaboration
         public static new UMI3DCollaborationClientServer Instance { get => UMI3DClientServer.Instance as UMI3DCollaborationClientServer; set => UMI3DClientServer.Instance = value; }
         public static bool useDto => environmentClient?.useDto ?? false;
 
+        public static PendingTransactionDto transactionPending = null;
+
         private static UMI3DWorldControllerClient worldControllerClient;
         private static UMI3DEnvironmentClient environmentClient;
 
         public static PublicIdentityDto PublicIdentity => worldControllerClient?.PublicIdentity;
 
         protected override ForgeConnectionDto connectionDto => environmentClient?.connectionDto;
+
+        public static Func<MultiProgress> EnvironmentProgress = null;
 
         public UnityEvent OnLeaving = new UnityEvent();
         public UnityEvent OnLeavingEnvironment = new UnityEvent();
@@ -56,6 +62,8 @@ namespace umi3d.cdk.collaboration
 
         public UnityEvent OnConnectionCheck = new UnityEvent();
         public UnityEvent OnConnectionRetreived = new UnityEvent();
+
+        static public OnProgressEvent onProgress = new OnProgressEvent();
 
         public OnForceLogoutEvent OnForceLogoutMessage = new OnForceLogoutEvent();
 
@@ -115,7 +123,11 @@ namespace umi3d.cdk.collaboration
             {
                 Instance.OnReconnect.Invoke();
                 UMI3DEnvironmentLoader.Clear(false);
-                environmentClient = await worldControllerClient.ConnectToEnvironment();
+
+                MultiProgress progress = new MultiProgress("Reconnect");
+                onProgress.Invoke(progress);
+
+                environmentClient = await worldControllerClient.ConnectToEnvironment(progress);
                 environmentClient.status = StatusType.CREATED;
             }
         }
@@ -133,6 +145,7 @@ namespace umi3d.cdk.collaboration
             bool aborted = false;
             UMI3DCollaborationClientServer.Instance.IsRedirectionInProgress = true;
             Instance.OnRedirectionStarted.Invoke();
+
             try
             {
                 if (Exists)
@@ -142,6 +155,7 @@ namespace umi3d.cdk.collaboration
                     if (await wc.Connect())
                     {
                         Instance.OnRedirection.Invoke();
+                        loadingEntities.Clear();
 
                         UMI3DEnvironmentClient env = environmentClient;
                         environmentClient = null;
@@ -155,8 +169,11 @@ namespace umi3d.cdk.collaboration
                         //Connection will not restart without this...
                         await Task.Yield();
 
+                        MultiProgress progress = EnvironmentProgress?.Invoke() ?? new MultiProgress("Joinning Environment");
+                        onProgress.Invoke(progress);
+
                         worldControllerClient = wc;
-                        environmentClient = await wc.ConnectToEnvironment();
+                        environmentClient = await wc.ConnectToEnvironment(progress);
                         environmentClient.status = StatusType.CREATED;
                     }
                 }
@@ -168,7 +185,8 @@ namespace umi3d.cdk.collaboration
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log($"Error in connection process : {e.Message} \n{e.StackTrace}");
+                UMI3DLogger.Log($"Error in connection process", scope);
+                UMI3DLogger.LogException(e, scope);
                 failed?.Invoke(e.Message);
                 aborted = true;
             }
@@ -348,7 +366,7 @@ namespace umi3d.cdk.collaboration
         ///<inheritdoc/>
         protected override async Task<LoadEntityDto> _GetEntity(List<ulong> ids)
         {
-            idsToSend.Clear();
+            List<ulong> idsToSend = new List<ulong>();
             foreach (ulong id in ids)
             {
                 if (loadingEntities.Add(id))
@@ -361,12 +379,30 @@ namespace umi3d.cdk.collaboration
                 }
 
             }
+
             UMI3DLogger.Log($"GetEntity {idsToSend.ToString<ulong>()}", scope);
-            return await (environmentClient?.GetEntity(idsToSend) ?? Task.FromResult<LoadEntityDto>(null));
+            LoadEntityDto result = null;
+            try
+            {
+                result = idsToSend.Count > 0 ?
+                    await (environmentClient?.GetEntity(idsToSend) ?? Task.FromResult<LoadEntityDto>(null))
+                    : new LoadEntityDto() { entities = new List<IEntity>() };
+            }
+            finally
+            {
+
+                foreach (var id in idsToSend)
+                {
+                    loadingEntities.Remove(id);
+                }
+                UMI3DLogger.Log($"Remove GetEntity {idsToSend.ToString<ulong>()} {loadingEntities.ToString<ulong>()}", scope);
+            }
+
+
+            return result;
         }
 
-        private SortedSet<ulong> loadingEntities = new SortedSet<ulong>();
-        private List<ulong> idsToSend = new List<ulong>();
+        private static SortedSet<ulong> loadingEntities = new SortedSet<ulong>();
 
 
         ///<inheritdoc/>

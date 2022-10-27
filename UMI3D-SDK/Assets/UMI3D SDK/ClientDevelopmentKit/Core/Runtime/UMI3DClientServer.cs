@@ -23,6 +23,7 @@ namespace umi3d.cdk
 {
     public class UMI3DClientServer : inetum.unityUtils.PersistentSingleBehaviour<UMI3DClientServer>
     {
+        private const DebugScope scope = DebugScope.CDK | DebugScope.Core | DebugScope.Networking;
         /// <summary>
         /// Environment connected to.
         /// </summary>
@@ -81,16 +82,25 @@ namespace umi3d.cdk
         protected virtual void _SendTracking(AbstractBrowserRequestDto dto) { }
 
 
-        public static async void GetFile(string url, Action<byte[]> callback, Action<string> onError, bool useParameterInsteadOfHeader)
+        public static async Task<byte[]> GetFile(string url, bool useParameterInsteadOfHeader)
         {
-            if (Exists)
+            try
             {
-                byte[] bytes = await Instance._GetFile(url, useParameterInsteadOfHeader);
-                if (bytes != null)
-                    callback.Invoke(bytes);
-            }
-            else
+                if (Exists)
+                {
+                    byte[] bytes = await Instance._GetFile(url, useParameterInsteadOfHeader);
+                    if (bytes != null)
+                        return (bytes);
+                    throw new Umi3dLoadingException($"No Data in response for {url}");
+                }
                 throw new Exception($"Instance of UMI3DClientServer is null");
+            }
+            catch (Exception e)
+            {
+                UMI3DLogger.LogException(e, scope);
+                throw;
+            }
+
         }
 
         protected virtual Task<byte[]> _GetFile(string url, bool useParameterInsteadOfHeader)
@@ -98,13 +108,12 @@ namespace umi3d.cdk
             throw new NotImplementedException();
         }
 
-        public static async void GetEntity(List<ulong> ids, Action<LoadEntityDto> callback)
+        public static async Task<LoadEntityDto> GetEntity(List<ulong> ids)
         {
             if (Exists)
             {
                 LoadEntityDto dto = await Instance._GetEntity(ids);
-                if (dto != null)
-                    callback.Invoke(dto);
+                return (dto);
             }
             else
                 throw new Exception($"Instance of UMI3DClientServer is null");

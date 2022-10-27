@@ -53,7 +53,6 @@ namespace umi3d.edk.collaboration
 
         public static murmur.MumbleManager MumbleManager => Exists ? Instance.mumbleManager : null;
 
-
         public float tokenLifeTime = 10f;
 
         public IdentifierApi Identifier;
@@ -64,6 +63,12 @@ namespace umi3d.edk.collaboration
 
         [EditorReadOnly]
         public string mumbleIp = "";
+
+        [EditorReadOnly]
+        public string mumbleHttpIp = "";
+
+        [EditorReadOnly]
+        public string guid = "";
 
         [EditorReadOnly]
         public bool useRandomForgePort;
@@ -185,7 +190,10 @@ namespace umi3d.edk.collaboration
             UMI3DLogger.Log($"Server Init", scope);
             base.Init();
 
-            mumbleManager = murmur.MumbleManager.Create(mumbleIp);
+            if (string.IsNullOrEmpty(guid))
+                guid = System.Guid.NewGuid().ToString();
+
+            mumbleManager = murmur.MumbleManager.Create(mumbleIp, mumbleHttpIp, guid);
 
             if (collaborativeModule == null)
                 collaborativeModule = new List<Umi3dNetworkingHelperModule>() { new UMI3DEnvironmentNetworkingCollaborationModule(), new common.collaboration.UMI3DCollaborationNetworkingModule() };
@@ -275,14 +283,14 @@ namespace umi3d.edk.collaboration
         /// Create new peers connection for a new user
         /// </summary>
         /// <param name="user"></param>
-        public static void NotifyUserJoin(UMI3DCollaborationUser user)
+        public static async Task NotifyUserJoin(UMI3DCollaborationUser user)
         {
             user.hasJoined = true;
             Collaboration.UserJoin(user);
-            MainThreadManager.Run(() =>
+            MainThreadManager.Run(async () =>
             {
                 UMI3DLogger.Log($"<color=magenta>User Join [{user.Id()}] [{user.login}]</color>", scope);
-                Instance.NotifyUserJoin(user);
+                await Instance.NotifyUserJoin(user);
             });
         }
 
@@ -290,10 +298,10 @@ namespace umi3d.edk.collaboration
         /// Call To Notify a user join.
         /// </summary>
         /// <param name="user">user that join</param>
-        public void NotifyUserJoin(UMI3DUser user)
+        public async Task NotifyUserJoin(UMI3DUser user)
         {
             if (user is UMI3DCollaborationUser _user)
-                WorldController.NotifyUserJoin(_user);
+                await WorldController.NotifyUserJoin(_user);
             OnUserJoin.Invoke(user);
         }
 
@@ -525,17 +533,26 @@ namespace umi3d.edk.collaboration
             base._Dispatch(transaction);
             foreach (UMI3DCollaborationUser user in UMI3DCollaborationServer.Collaboration.Users)
             {
-                if (user.status == StatusType.NONE)
+                switch (user.status)
                 {
-                    continue;
+                    case StatusType.NONE:
+                    case StatusType.REGISTERED:
+                        continue;
+                    case StatusType.MISSING:
+                    case StatusType.CREATED:
+                    case StatusType.READY:
+                        if (!TransactionToBeSend.ContainsKey(user))
+                        {
+                            TransactionToBeSend[user] = new Transaction();
+                        }
+
+                        TransactionToBeSend[user] += transaction;
+                        continue;
                 }
-                if (user.status == StatusType.MISSING || user.status == StatusType.CREATED || user.status == StatusType.READY)
+
+                if (user.networkPlayer == null)
                 {
-                    if (!TransactionToBeSend.ContainsKey(user))
-                    {
-                        TransactionToBeSend[user] = new Transaction();
-                    }
-                    TransactionToBeSend[user] += transaction;
+                    UMI3DLogger.LogWarning($"Network player null, user : id {user.Id()}, display name {user.displayName}", scope);
                     continue;
                 }
 
@@ -557,7 +574,13 @@ namespace umi3d.edk.collaboration
 
                     if (user.status == StatusType.MISSING || user.status == StatusType.CREATED || user.status == StatusType.READY)
                     {
-                        NavigationToBeSend[user] = dispatchableRequest;
+
+                        if (!DispatchableToBeSend.ContainsKey(user))
+                        {
+                            DispatchableToBeSend[user] = new List<DispatchableRequest>();
+                        }
+
+                        DispatchableToBeSend[user].Add(dispatchableRequest);
                         continue;
                     }
 
@@ -580,7 +603,14 @@ namespace umi3d.edk.collaboration
         }
 
         private readonly Dictionary<UMI3DCollaborationUser, Transaction> TransactionToBeSend = new Dictionary<UMI3DCollaborationUser, Transaction>();
-        private readonly Dictionary<UMI3DCollaborationUser, DispatchableRequest> NavigationToBeSend = new Dictionary<UMI3DCollaborationUser, DispatchableRequest>();
+        private readonly Dictionary<UMI3DCollaborationUser, List<DispatchableRequest>> DispatchableToBeSend = new Dictionary<UMI3DCollaborationUser, List<DispatchableRequest>>();
+
+        public PendingTransactionDto IsThereTransactionPending(UMI3DCollaborationUser user) => new PendingTransactionDto()
+        {
+            areTransactionPending = (TransactionToBeSend.ContainsKey(user) && TransactionToBeSend[user].Any(o => o.users.Contains(user))),
+            areDispatchableRequestPending = (DispatchableToBeSend.ContainsKey(user) && DispatchableToBeSend[user].Any(o => o.users.Contains(user)))
+        };
+
         private void Update()
         {
             foreach (KeyValuePair<UMI3DCollaborationUser, Transaction> kp in TransactionToBeSend.ToList())
@@ -592,23 +622,24 @@ namespace umi3d.edk.collaboration
                     TransactionToBeSend.Remove(user);
                     continue;
                 }
-                if (user.status == StatusType.MISSING || user.status == StatusType.CREATED || user.status == StatusType.READY) continue;
+                if (user.status < StatusType.ACTIVE) continue;
                 transaction.Simplify();
                 SendTransaction(user, transaction);
                 TransactionToBeSend.Remove(user);
             }
-            foreach (KeyValuePair<UMI3DCollaborationUser, DispatchableRequest> kp in NavigationToBeSend.ToList())
+            foreach (KeyValuePair<UMI3DCollaborationUser, List<DispatchableRequest>> kp in DispatchableToBeSend.ToList())
             {
                 UMI3DCollaborationUser user = kp.Key;
-                DispatchableRequest navigation = kp.Value;
+                List<DispatchableRequest> navigations = kp.Value;
                 if (user.status == StatusType.NONE)
                 {
-                    NavigationToBeSend.Remove(user);
+                    DispatchableToBeSend.Remove(user);
                     continue;
                 }
-                if (user.status == StatusType.MISSING || user.status == StatusType.CREATED || user.status == StatusType.READY) continue;
-                SendNavigationRequest(user, navigation);
-                TransactionToBeSend.Remove(user);
+                if (user.status < StatusType.ACTIVE) continue;
+                foreach (var navigation in navigations)
+                    SendNavigationRequest(user, navigation);
+                DispatchableToBeSend.Remove(user);
             }
         }
 
